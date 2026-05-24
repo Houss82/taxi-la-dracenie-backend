@@ -1,9 +1,12 @@
 var express = require("express");
 var router = express.Router();
+const connectDB = require("../models/connection");
 const Reservation = require("../models/reservation");
 
 router.post("/reservation", async (req, res) => {
   try {
+    await connectDB();
+
     const saved = await new Reservation({
       nom: req.body.nom,
       indicatifPays: req.body.indicatifPays || "+33",
@@ -25,12 +28,16 @@ router.post("/reservation", async (req, res) => {
       reservation: saved.toObject(),
     });
   } catch (error) {
-    res.status(400).json({ result: false, error: error.message });
+    console.error("POST /reservation:", error.message);
+    const status = error.name === "ValidationError" ? 400 : 500;
+    res.status(status).json({ result: false, error: error.message });
   }
 });
 
 router.get("/reservations", async (req, res) => {
   try {
+    await connectDB();
+
     const items = await Reservation.find();
     res.json({ result: true, count: items.length, reservations: items });
   } catch (error) {

@@ -1,4 +1,5 @@
-const connectDB = require("./models/connection");
+require("dotenv").config();
+
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -10,15 +11,33 @@ const usersRouter = require("./routes/users");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3003",
+  "https://taxis-la-dracenie.fr",
+  "https://www.taxis-la-dracenie.fr",
+  "https://taxi-la-dracenie-frontend.vercel.app",
+];
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.endsWith(".vercel.app")) return true;
+  return false;
+}
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3003",
-      "https://taxis-la-dracenie.fr",
-      "https://www.taxis-la-dracenie.fr",
-    ],
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
   })
 );
 app.use(logger("dev"));
@@ -29,7 +48,5 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
-
-connectDB();
 
 module.exports = app;
